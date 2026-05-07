@@ -21,6 +21,7 @@ maze = [
 def findPath(maze, stdscr):
     start = "O"
     end = "X"
+    start_pos = findStart(maze, start)
 
     q = queue.Queue()
     q.put((start_pos, [start_pos])) # use a tuple to store the currentposition and the path to it in the list
@@ -31,23 +32,28 @@ def findPath(maze, stdscr):
         current_pos, path = q.get() # get the most recent element from the queue
         row, col = current_pos
 
+        stdscr.clear()
+        printMaze(maze, stdscr, path) # draw the path
+        time.sleep(0.2) # make the iterations show up slower
+        stdscr.refresh()
+
         if maze[row][col] == end:
             return path
         
-    # if we have not reached the end then we check for neighbors
-    neighbors = findNeighbors(maze, row, col)
-    for neighbor in neighbors:
-        if neighbor in visited: # do not process spaces that are already visited
-            continue
-        
-        r, c = neighbor
-        if maze[r][c] == "#": # not not process #
-            continue
-        
-        # if the neighbor is not visited and is not a # add it to the path and add it to the queue
-        new_path = path + [neighbor]
-        q.put((neighbor, new_path))
-        visited.add(neighbor)
+        # if we have not reached the end then we check for neighbors
+        neighbors = findNeighbors(maze, row, col)
+        for neighbor in neighbors:
+            if neighbor in visited: # do not process spaces that are already visited
+                continue
+            
+            r, c = neighbor
+            if maze[r][c] == "#": # not not process #
+                continue
+            
+            # if the neighbor is not visited and is not a # add it to the path and add it to the queue
+            new_path = path + [neighbor]
+            q.put((neighbor, new_path))
+            visited.add(neighbor)
 
 # depth-first search - gaurunteed to find a solution
 
@@ -80,18 +86,18 @@ def printMaze(maze, stdscr, path=[]):
 
     for i, row in enumerate(maze): # enumerate returns the index and value in the maze
         for j, value in enumerate(row):
-            stdscr.addstr(i, j*3, value, GREEN)
+            if (i,j) in path:
+                stdscr.addstr(i, j*3, "X", MAGENTA)
+            else:
+                stdscr.addstr(i, j*3, value, GREEN)
 
 
 # function used to output onto terminal
 def main(stdscr): 
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
-    color_theme = curses.color_pair(1)
-
-    stdscr.clear()
-    printMaze(maze, stdscr)
-    stdscr.refresh()
+    
+    findPath(maze, stdscr)
     stdscr.getch() # wait for user input something before exiting the program
 
 wrapper(main) # this initializes the curses module
