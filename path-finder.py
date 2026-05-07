@@ -17,6 +17,22 @@ maze = [
     ["#", "#", "#", "#", "#", "#", "#", "#", "#"]
 ]
 
+# breadth-first search - gaurunteed to find a solution
+def findPath(maze, stdscr):
+    start = "O"
+    end = "X"
+
+# depth-first search - gaurunteed to find a solution
+
+# find the coordinates of the initial position
+def findStart(maze, start):
+    for i, row in enumerate(maze):
+        for j, value in enumerate(row):
+            if value == start:
+                return i,j # return the position of O
+            
+    return None # when position does not = O
+
 def printMaze(maze, stdscr, path=[]):
     GREEN = curses.color_pair(1)
     MAGENTA = curses.color_pair(2)
