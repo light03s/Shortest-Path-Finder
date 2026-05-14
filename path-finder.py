@@ -57,6 +57,17 @@ def findPath(maze, stdscr):
 
 # depth-first search - gaurunteed to find a solution
 
+    # step 1: check for valid moves at the current node -> check in the order: up, right, left down
+        # - can't go backwards
+        # - can't go through a wall (#)
+        # - can't go past the edges of the maze
+    # step 2: place each visited node (current node) in the visited stack
+    # step 3: if no possible options for traversal left, and the exit has not been reached, return false
+    # step 4: go back through the visited nodes in the stack for the most recent node with unexplored neighboring options
+        # mark the new node as traversed and repeat
+    # step 5: when the end is reached return true through the succesful path to mark it
+
+
 # find the coordinates of the initial position
 def findStart(maze, start):
     for i, row in enumerate(maze):
