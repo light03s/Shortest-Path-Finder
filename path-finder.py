@@ -17,99 +17,211 @@ maze = [
     ["#", "#", "#", "#", "#", "#", "#", "#", "#"]
 ]
 
-# breadth-first search - gaurunteed to find a solution
-def findPath(maze, stdscr):
-    start = "O"
-    end = "X"
-    start_pos = findStart(maze, start)
+# ---------------- BFS ----------------
+
+def bfs_search(maze):
+
+    start_pos = findStart(maze, "O")
 
     q = queue.Queue()
-    q.put((start_pos, [start_pos])) # use a tuple to store the currentposition and the path to it in the list
+    q.put((start_pos, [start_pos]))
 
-    visited = set() # contains all visited positions
+    visited = set()
 
     while not q.empty():
-        current_pos, path = q.get() # get the most recent element from the queue
+
+        current_pos, path = q.get()
         row, col = current_pos
 
-        stdscr.clear()
-        printMaze(maze, stdscr, path) # draw the path
-        time.sleep(0.2) # make the iterations show up slower
-        stdscr.refresh()
+        yield path
 
-        if maze[row][col] == end:
-            return path
-        
-        # if we have not reached the end then we check for neighbors
+        if maze[row][col] == "X":
+            return
+
         neighbors = findNeighbors(maze, row, col)
+
         for neighbor in neighbors:
-            if neighbor in visited: # do not process spaces that are already visited
+
+            if neighbor in visited:
                 continue
-            
+
             r, c = neighbor
-            if maze[r][c] == "#": # not not process #
+
+            if maze[r][c] == "#":
                 continue
-            
-            # if the neighbor is not visited and is not a # add it to the path and add it to the queue
-            new_path = path + [neighbor]
-            q.put((neighbor, new_path))
+
             visited.add(neighbor)
 
-# depth-first search - gaurunteed to find a solution
+            new_path = path + [neighbor]
 
-    # step 1: check for valid moves at the current node -> check in the order: up, right, left down
-        # - can't go backwards
-        # - can't go through a wall (#)
-        # - can't go past the edges of the maze
-    # step 2: place each visited node (current node) in the visited stack
-    # step 3: if no possible options for traversal left, and the exit has not been reached, return false
-    # step 4: go back through the visited nodes in the stack for the most recent node with unexplored neighboring options
-        # mark the new node as traversed and repeat
-    # step 5: when the end is reached return true through the succesful path to mark it
+            q.put((neighbor, new_path))
 
 
-# find the coordinates of the initial position
+# ---------------- DFS ----------------
+
+def dfs_search(maze):
+
+    start_pos = findStart(maze, "O")
+
+    stack = [(start_pos, [start_pos])]
+
+    visited = set()
+
+    while stack:
+
+        current_pos, path = stack.pop()
+        row, col = current_pos
+
+        if current_pos in visited:
+            continue
+
+        visited.add(current_pos)
+
+        yield path
+
+        if maze[row][col] == "X":
+            return
+
+        directions = [
+            (-1, 0),  # up
+            (0, 1),   # right
+            (0, -1),  # left
+            (1, 0)    # down
+        ]
+
+        for dr, dc in reversed(directions):
+
+            new_row = row + dr
+            new_col = col + dc
+
+            if (
+                0 <= new_row < len(maze)
+                and 0 <= new_col < len(maze[0])
+                and maze[new_row][new_col] != "#"
+            ):
+
+                stack.append(
+                    (
+                        (new_row, new_col),
+                        path + [(new_row, new_col)]
+                    )
+                )
+
+
+# ---------------- HELPERS ----------------
+
 def findStart(maze, start):
+
     for i, row in enumerate(maze):
         for j, value in enumerate(row):
-            if value == start:
-                return i,j # return the position of O
-            
-    return None # when position does not = O
 
-def findNeighbors(maze, row, col): # make sure the neighbors are a valid next position in the maze
+            if value == start:
+                return (i, j)
+
+    return None
+
+
+def findNeighbors(maze, row, col):
+
     neighbors = []
 
-    if row > 0: # go up
+    if row > 0:
         neighbors.append((row - 1, col))
-    if row + 1 < len(maze): # go down
+
+    if row + 1 < len(maze):
         neighbors.append((row + 1, col))
-    if col > 0: # go left
-        neighbors.append((row, col - 1 ))
-    if col + 1 < len(maze[0]): # go right
-        neighbors.append((row, col + 1 ))
+
+    if col > 0:
+        neighbors.append((row, col - 1))
+
+    if col + 1 < len(maze[0]):
+        neighbors.append((row, col + 1))
 
     return neighbors
 
-def printMaze(maze, stdscr, path=[]):
-    GREEN = curses.color_pair(1)
-    MAGENTA = curses.color_pair(2)
 
-    for i, row in enumerate(maze): # enumerate returns the index and value in the maze
+# ---------------- DRAWING ----------------
+
+def printMaze(maze, stdscr, path=[], offset_x=0, title="", color=2):
+
+    WALL_COLOR = curses.color_pair(1)
+    PATH_COLOR = curses.color_pair(color)
+
+    stdscr.addstr(0, offset_x, title)
+
+    for i, row in enumerate(maze):
+
         for j, value in enumerate(row):
-            if (i,j) in path:
-                stdscr.addstr(i, j*3, "X", MAGENTA)
+
+            if (i, j) in path:
+
+                stdscr.addstr(
+                    i + 1,
+                    offset_x + j * 2,
+                    "X",
+                    PATH_COLOR
+                )
+
             else:
-                stdscr.addstr(i, j*3, value, GREEN)
+
+                stdscr.addstr(
+                    i + 1,
+                    offset_x + j * 2,
+                    value,
+                    WALL_COLOR
+                )
 
 
-# function used to output onto terminal
-def main(stdscr): 
+# ---------------- MAIN ----------------
+
+def main(stdscr):
+
+    curses.curs_set(0)
+
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
-    
-    findPath(maze, stdscr)
-    stdscr.getch() # wait for user input something before exiting the program
+    curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
-wrapper(main) # this initializes the curses module
-    
+    bfs = bfs_search(maze)
+    dfs = dfs_search(maze)
+
+    bfs_done = False
+    dfs_done = False
+
+    bfs_path = []
+    dfs_path = []
+
+    while not (bfs_done and dfs_done):
+
+        stdscr.clear()
+
+        if not bfs_done:
+
+            try:
+                bfs_path = next(bfs)
+
+            except StopIteration:
+                bfs_done = True
+
+        if not dfs_done:
+
+            try:
+                dfs_path = next(dfs)
+
+            except StopIteration:
+                dfs_done = True
+
+        # BFS on left
+        printMaze(maze, stdscr, bfs_path, offset_x=0, title="BFS", color=2)
+
+        # DFS on right
+        printMaze(maze, stdscr, dfs_path, offset_x=35, title="DFS", color=3)
+
+        stdscr.refresh()
+
+        time.sleep(0.1)
+
+    stdscr.getch()
+
+
+wrapper(main)
