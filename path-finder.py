@@ -17,6 +17,7 @@ maze = [
     ["#", "#", "#", "#", "#", "#", "#", "#", "#"]
 ]
 
+
 # ---------------- BFS ----------------
 
 def bfs_search(maze):
@@ -89,6 +90,7 @@ def dfs_search(maze):
             (1, 0)    # down
         ]
 
+        # reversed so DFS explores in desired order
         for dr, dc in reversed(directions):
 
             new_row = row + dr
@@ -114,7 +116,6 @@ def findStart(maze, start):
 
     for i, row in enumerate(maze):
         for j, value in enumerate(row):
-
             if value == start:
                 return (i, j)
 
@@ -155,21 +156,11 @@ def printMaze(maze, stdscr, path=[], offset_x=0, title="", color=2):
 
             if (i, j) in path:
 
-                stdscr.addstr(
-                    i + 1,
-                    offset_x + j * 2,
-                    "X",
-                    PATH_COLOR
-                )
+                stdscr.addstr(i + 1, offset_x + j * 2, "X", PATH_COLOR)
 
             else:
 
-                stdscr.addstr(
-                    i + 1,
-                    offset_x + j * 2,
-                    value,
-                    WALL_COLOR
-                )
+                stdscr.addstr(i + 1, offset_x + j * 2, value, WALL_COLOR)
 
 
 # ---------------- MAIN ----------------
@@ -178,8 +169,10 @@ def main(stdscr):
 
     curses.curs_set(0)
 
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair( 1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+
     curses.init_pair(2, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+
     curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
     bfs = bfs_search(maze)
@@ -191,9 +184,17 @@ def main(stdscr):
     bfs_path = []
     dfs_path = []
 
+    bfs_start = time.time()
+    dfs_start = time.time()
+
+    bfs_end = None
+    dfs_end = None
+
     while not (bfs_done and dfs_done):
 
         stdscr.clear()
+
+        # -------- BFS --------
 
         if not bfs_done:
 
@@ -202,6 +203,9 @@ def main(stdscr):
 
             except StopIteration:
                 bfs_done = True
+                bfs_end = time.time()
+
+        # -------- DFS --------
 
         if not dfs_done:
 
@@ -210,12 +214,35 @@ def main(stdscr):
 
             except StopIteration:
                 dfs_done = True
+                dfs_end = time.time()
 
-        # BFS on left
+        # -------- TIMERS --------
+
+        bfs_elapsed = (
+            bfs_end - bfs_start
+            if bfs_end
+            else time.time() - bfs_start
+        )
+
+        dfs_elapsed = (
+            dfs_end - dfs_start
+            if dfs_end
+            else time.time() - dfs_start
+        )
+
+        # -------- DRAW BFS --------
+
         printMaze(maze, stdscr, bfs_path, offset_x=0, title="BFS", color=2)
 
-        # DFS on right
+        # -------- DRAW DFS --------
+
         printMaze(maze, stdscr, dfs_path, offset_x=35, title="DFS", color=3)
+
+        # -------- DISPLAY TIMES --------
+
+        stdscr.addstr(len(maze) + 3, 0, f"BFS Time: {bfs_elapsed:.2f} seconds")
+
+        stdscr.addstr(len(maze) + 3, 35,f"DFS Time: {dfs_elapsed:.2f} seconds")
 
         stdscr.refresh()
 
